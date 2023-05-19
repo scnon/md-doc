@@ -24,6 +24,7 @@ func runServer(cmd *cobra.Command, args []string) error {
 	e.Debug = false
 
 	e.GET("/", listHandler)
+	e.Static("/static", "./static")
 	e.Any("/git/:repo/:action", gitHandler)
 	e.Any("/doc/:repo/*", docHandler)
 
@@ -89,7 +90,9 @@ func docHandler(c echo.Context) error {
 	if err != nil {
 		return utils.Resp404(c)
 	}
-	res, err := utils.ReaderDoc(repo, path, out)
+
+	author, created, updated := utils.GetFileInfo(repo, path)
+	res, err := utils.ReaderDoc(repo, path, author, created, updated, out)
 	if err != nil {
 		return utils.Resp500(c, err)
 	}

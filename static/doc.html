@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Md-Doc - {{.Repo}} - {{.Title}}</title>
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css"
+        integrity="sha512-Ya9H+OPj8NgcQk34nCrbehaA0atbzGdZCI2uCbqVRELgnlrh8vQ2INMnkadVMSniC54HChLIh5htabVuKJww8g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/static/css/doc.css" />
+</head>
+
+<body>
+    <div class="content">
+        <div class="title">
+            {{.Title}}
+        </div>
+        <div class="info">
+            <div>Author: {{.Author}}</div>
+            <div>Created: {{.Created}}</div>
+            <div>Updated: {{.Updated}}</div>
+        </div>
+        <div class="markdown-body">
+            {{.Content}}
+        </div>
+    </div>
+</body>
+
+</html>

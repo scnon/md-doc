@@ -1,0 +1,40 @@
+img,
+svg {
+	max-width: 100%;
+	display: block;
+}
+
+html {
+	color-scheme: light dark;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+	font-size: 1.125rem;
+	line-height: 1.5;
+}
+
+.content {
+	width: min(108ch, 100% - 4rem);
+	margin-inline: auto;
+	padding-left: 2rem;
+	padding-right: 2rem;
+}
+
+.title {
+	font-size: 2rem;
+	font-weight: 600;
+	margin-bottom: 2rem;
+	text-align: center;
+}
+
+.info {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 2rem;
+	padding: 0 12px;
+}
+
+.markdown-body {
+	padding: 12px;
+}
