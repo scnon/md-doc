@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"bytes"
-	"io/ioutil"
 	"log"
 	"os/exec"
 	"strings"
-	"text/template"
 
 	"github.com/labstack/echo/v4"
 	"github.com/scnon/md-doc/internal"
@@ -27,35 +24,13 @@ func runServer(cmd *cobra.Command, args []string) error {
 	e.Debug = false
 
 	e.GET("/", listHandler)
-	e.Any("/git/:repo/:action", gitActionHandler)
+	e.Any("/git/:repo/:action", gitHandler)
 	e.Any("/doc/:repo/*", docHandler)
-
-	e.GET("/demo", func(c echo.Context) error {
-		byte, err := ioutil.ReadFile("./data/demo.md")
-		if err != nil {
-			return err
-		}
-		tmpl, err := template.New("doc").Parse(model.DocTmpl)
-		if err != nil {
-			return err
-		}
-
-		var reader bytes.Buffer
-		err = tmpl.Execute(&reader, map[string]string{
-			"Title":   "demo doc",
-			"Content": string(internal.Render2Html(byte)),
-		})
-		if err != nil {
-			return err
-		}
-
-		return c.HTML(200, reader.String())
-	})
 
 	return e.Start(":80")
 }
 
-func gitActionHandler(c echo.Context) error {
+func gitHandler(c echo.Context) error {
 	repo := c.Param("repo")
 	action := c.Param("action")
 
@@ -63,26 +38,14 @@ func gitActionHandler(c echo.Context) error {
 
 	switch action {
 	case "create":
-		if utils.CheckRepoExist(repo) {
-			log.Println("create failed: repo ", repo, " exist")
-			return c.JSON(200, model.Response{
-				Code: 201,
-				Msg:  "repo exist",
-			})
-		}
-
-		log.Println("begin create repo: ", repo)
-		code := 200
-		msg := "create repo success"
 		err := utils.CreateRepo(repo)
 		if err != nil {
-			code = 202
-			msg = err.Error()
+			return utils.Resp500(c, err)
 		}
 
 		return c.JSON(200, model.Response{
-			Code: code,
-			Msg:  msg,
+			Code: 200,
+			Msg:  "create repo success",
 		})
 	default:
 		internal.Handler()(c.Response(), c.Request())
@@ -117,7 +80,19 @@ func listHandler(c echo.Context) error {
 func docHandler(c echo.Context) error {
 	repo := c.Param("repo")
 	path := c.Param("*")
-
 	log.Println(repo, path)
-	return c.String(200, repo+" - "+path)
+
+	cmd := exec.Command("git", "show", "HEAD:"+path)
+	cmd.Dir = utils.GetDataPath(repo)
+	out, err := cmd.Output()
+
+	if err != nil {
+		return utils.Resp404(c)
+	}
+	res, err := utils.ReaderDoc(repo, path, out)
+	if err != nil {
+		return utils.Resp500(c, err)
+	}
+
+	return c.HTML(200, res)
 }

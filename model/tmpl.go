@@ -25,10 +25,14 @@ body {
 }
 
 .content {
-	width: min(88ch, 100% - 4rem);
+	width: min(128ch, 100% - 4rem);
 	margin-inline: auto;
 	padding-left: 2rem;
 	padding-right: 2rem;
+}
+
+.markdown-body {
+	padding: 12px;
 }
 </style>
 </head>
