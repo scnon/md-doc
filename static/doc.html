@@ -9,9 +9,17 @@
         integrity="sha512-Ya9H+OPj8NgcQk34nCrbehaA0atbzGdZCI2uCbqVRELgnlrh8vQ2INMnkadVMSniC54HChLIh5htabVuKJww8g=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="/static/css/doc.css" />
+    <link rel="stylesheet" href="/static/css/search.css" />
+    <script src="/static/scripts/jquery-3.7.0.min.js"></script>
+    <script src="/static/scripts/doc.js"></script>
 </head>
 
 <body>
+    <div class="search_bar" id="search_bar" style="display: none;">
+        <input type="text" id="search_input" onchange="onSearchInput()" onfocusout="onSearchOut()" placeholder="Search..." />
+        <div class="search_result" id="search_result"></div>
+    </div>
+
     <div class="content">
         <div class="title">
             {{.Title}}

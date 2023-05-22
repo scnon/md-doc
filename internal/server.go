@@ -43,8 +43,6 @@ type HandlerReq struct {
 }
 
 var (
-	DefaultAddress = ":8080"
-
 	DefaultConfig = Config{
 		AuthPassEnvVar: "",
 		AuthUserEnvVar: "",
@@ -70,6 +68,10 @@ var services = map[string]Service{
 	"(.*?)/objects/[0-9a-f]{2}/[0-9a-f]{38}$":      {"GET", getLooseObject, ""},
 	"(.*?)/objects/pack/pack-[0-9a-f]{40}\\.pack$": {"GET", getPackFile, ""},
 	"(.*?)/objects/pack/pack-[0-9a-f]{40}\\.idx$":  {"GET", getIdxFile, ""},
+}
+
+func InitConfig(config Config) {
+	DefaultConfig = config
 }
 
 // Request handling function

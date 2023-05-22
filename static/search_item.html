@@ -1,0 +1,6 @@
+{{ range $val, $index := .Data}}
+<div class="{{ .Class }}">
+<div class="search_item_title">{{ .Title}}</div>
+<div class="search_item_content">{{ .Content }}</div>
+</div>
+{{ end }}

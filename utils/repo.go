@@ -4,25 +4,46 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
 	"text/template"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/scnon/md-doc/internal"
 )
 
-func GetDataPath(name string) string {
-	path, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprint(path, "/data/git/", name)
+var (
+	DataPath   = "./data/"
+	RepoPrefix = "repo"
+	GitPrefix  = "git"
+)
+
+func GetRepoBase() string {
+	return fmt.Sprint(DataPath, RepoPrefix, "/")
+}
+
+func GetGitBase() string {
+	return fmt.Sprint(DataPath, GitPrefix, "/")
+}
+
+func GetGitUrl(name string) string {
+	return fmt.Sprint("http://localhost/repo/", name)
+}
+
+func GetRepoPath(name string) string {
+	return fmt.Sprint(GetRepoBase(), name, "/")
+}
+
+func GetGitPath(name string) string {
+	return fmt.Sprint(GetGitBase(), name, "/")
 }
 
 func CreateRepo(name string) error {
-	path := GetDataPath(name)
+	path := GetRepoPath(name)
 
 	if CheckRepoExist(name) {
 		log.Println("create failed: repo ", name, " exist")
@@ -51,7 +72,7 @@ func CreateRepo(name string) error {
 }
 
 func CheckRepoExist(name string) bool {
-	path := GetDataPath(name)
+	path := GetRepoPath(name)
 	_, err := os.Stat(path)
 
 	return !os.IsNotExist(err)
@@ -81,7 +102,7 @@ func ReaderDoc(repo, file, author, created, updated string, content []byte) (str
 
 func GetFileAuthor(repo, file string) (string, error) {
 	cmd := exec.Command("git", "log", "--pretty=format:%an", "HEAD", "--", file)
-	cmd.Dir = GetDataPath(repo)
+	cmd.Dir = GetRepoPath(repo)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -94,7 +115,7 @@ func GetFileAuthor(repo, file string) (string, error) {
 
 func GetFileCreated(repo, file string) (string, error) {
 	cmd := exec.Command("git", "log", "--pretty=format:%ad", "--date=format-local:'%Y/%m/%d %H:%M:%S'", "--diff-filter=A", "HEAD", "--", file)
-	cmd.Dir = GetDataPath(repo)
+	cmd.Dir = GetRepoPath(repo)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -107,7 +128,7 @@ func GetFileCreated(repo, file string) (string, error) {
 
 func GetFileUpdated(repo, file string) (string, error) {
 	cmd := exec.Command("git", "log", "--pretty=format:%ad", "--date=format-local:'%Y/%m/%d %H:%M:%S'", "--diff-filter=M", "HEAD", "--", file)
-	cmd.Dir = GetDataPath(repo)
+	cmd.Dir = GetRepoPath(repo)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
@@ -137,4 +158,59 @@ func GetFileInfo(repo, file string) (string, string, string) {
 	}
 
 	return author, created, updated
+}
+
+func GetFile(repo, file string) ([]byte, error) {
+	path := GetGitPath(repo)
+	filePath := fmt.Sprint(path, "/", file)
+
+	return ioutil.ReadFile(filePath)
+}
+
+func UpdateGit(path string) error {
+	_, err := os.Stat(GetGitPath(path))
+
+	if os.IsNotExist(err) {
+		_, err := git.PlainClone(GetGitPath(path), false, &git.CloneOptions{
+			URL:      GetGitUrl(path),
+			Progress: os.Stdout,
+		})
+		return err
+	} else {
+		repo, err := git.PlainOpen(GetGitPath(path))
+		if err != nil {
+			return err
+		}
+
+		tree, err := repo.Worktree()
+		if err != nil {
+			return err
+		}
+
+		err = tree.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil {
+			return err
+		}
+
+		ref, err := repo.Head()
+		if err != nil {
+			return err
+		}
+
+		commit, err := repo.CommitObject(ref.Hash())
+		if err != nil {
+			return err
+		}
+
+		file, err := commit.Files()
+		if err != nil {
+			return err
+		}
+
+		file.ForEach(func(f *object.File) error {
+			log.Println(f.Name)
+			return nil
+		})
+		return err
+	}
 }
